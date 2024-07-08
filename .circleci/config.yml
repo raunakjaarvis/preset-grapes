@@ -1,0 +1,47 @@
+
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/node:16.16
+    steps:
+      - checkout
+      - node/install-packages:
+          check-cache: always
+          pkg-manager: npm
+          with-cache: false          
+      - run:
+          name: Run tests
+          command: npm run test
+  deploy_to_production:
+    docker:
+      - image: cimg/node:16.16
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run: ls -a
+      - run: |
+          server="$SSH_USER$SSH_HOST"
+          working_dir="/var/www/dory_system_templates"
+      # - run:
+      #     name: Add to Known hosts
+      #     command: ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+      # - run:
+      #     name: Install pm2
+      #     command: sudo npm i -g pm2
+      # - run:
+      #     name: Deploy to VPS
+      #     command: pm2 deploy production
+
+workflows:
+  build-workflow:
+    jobs:
+      - build-and-test
+      - deploy_to_production:
+          requires:
+            - "build-and-test"
